@@ -13,13 +13,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String?
+  password  String
+  carrinhos Carrinho[]
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
   price       Float
   stock       Int
-  category    String @default("Sem Categoria")    // ← Nova coluna
+  category    String   @default("Sem Categoria")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  CarrinhoItem CarrinhoItem[]
+}
+
+model Carrinho {
+  id        Int            @id @default(autoincrement())
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  items     CarrinhoItem[]
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model CarrinhoItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  carrinho   Carrinho @relation(fields: [carrinhoId], references: [id])
+  carrinhoId Int
+
+  @@unique([carrinhoId, productId])
 }
