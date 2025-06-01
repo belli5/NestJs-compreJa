@@ -12,38 +12,46 @@ export class CarrinhoService {
       userId,
     },
   });
-}
+ }
 
-  async addProductToUserCart(userId: number, productId: number, quantity: number) {
-  // Tentar encontrar carrinho do usuário
+  async addProductToUserCart(
+  userId: number,
+  products: { productId: number; quantity: number }[]
+ ) {
+  // Buscar ou criar o carrinho do usuário
   let carrinho = await this.prisma.carrinho.findFirst({
     where: { userId },
-    orderBy: { createdAt: 'desc' }, // pega o mais recente
+    orderBy: { createdAt: 'desc' }, // mais recente
   });
 
-  // Se não existe carrinho, cria um novo
   if (!carrinho) {
     carrinho = await this.createCart(userId);
   }
 
-  // Adiciona ou atualiza produto no carrinho
-  return this.prisma.carrinhoItem.upsert({
-    where: {
-      carrinhoId_productId: {
+  // Processar cada produto recebido
+  const operations = products.map(({ productId, quantity }) =>
+    this.prisma.carrinhoItem.upsert({
+      where: {
+        carrinhoId_productId: {
+          carrinhoId: carrinho.id,
+          productId,
+        },
+      },
+      update: {
+        quantity: { increment: quantity },
+      },
+      create: {
         carrinhoId: carrinho.id,
         productId,
+        quantity,
       },
-    },
-    update: {
-      quantity: { increment: quantity },
-    },
-    create: {
-      carrinhoId: carrinho.id,
-      productId,
-      quantity,
-    },
-  });
+    })
+  );
+
+  // Executar todas as operações em paralelo
+  return Promise.all(operations);
  }
+
 
 
   async removeProduct(carrinhoId: number, productId: number) {
@@ -65,7 +73,7 @@ export class CarrinhoService {
   return this.prisma.carrinho.delete({
     where: { id: carrinhoId },
   });
-}
+ }
 
 
   async getCart(carrinhoId: number) {
@@ -81,5 +89,48 @@ export class CarrinhoService {
     });
   }
 
-  
+  async finalizarCompra(carrinhoId: number, formaPagamento: string) {
+  const carrinho = await this.prisma.carrinho.findUnique({
+    where: { id: carrinhoId },
+    include: {
+      items: { include: { product: true } },
+      user: true
+    }
+  });
+
+  if (!carrinho || carrinho.items.length === 0) {
+    throw new Error("Carrinho inválido ou vazio.");
+  }
+
+  const total = carrinho.items.reduce((acc, item) => {
+    return acc + item.quantity * item.product.price;
+  }, 0);
+
+  const pedido = await this.prisma.historicoPedido.create({
+    data: {
+      userId: carrinho.userId,
+      total: total,
+      pagamento: formaPagamento,
+      status: 'finalizado',
+      itens: {
+        create: carrinho.items.map(item => ({
+          quantidade: item.quantity,
+          precoUnit: item.product.price,
+          productId: item.productId,
+        }))
+      }
+    },
+    include: {
+      itens: true
+    }
+  });
+
+  // Limpar o carrinho
+  await this.prisma.carrinhoItem.deleteMany({ where: { carrinhoId } });
+  // Remove o carrinho
+  await this.prisma.carrinho.delete({ where: { id: carrinhoId } });
+
+  return pedido;
+ }
+
 }
