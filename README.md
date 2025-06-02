@@ -21,78 +21,175 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+**Projeto NestJS - API de Carrinho de Compras com Prisma e SQLite**
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Este projeto implementa uma **API RESTful** de **carrinho de compras** utilizando **NestJS**, **Prisma ORM** e **SQLite** como banco de dados. Permite:
 
-## Project setup
+->Cadastro de usuários
 
-```bash
-$ pnpm install
-```
+->Cadastro de produtos
 
-## Compile and run the project
+->Adição/remover produtos do carrinho
 
-```bash
-# development
-$ pnpm run start
+->Finalização de compra (com geração de histórico/pedido)
 
-# watch mode
-$ pnpm run start:dev
+:gear: Tecnologias
 
-# production mode
-$ pnpm run start:prod
-```
+Node.js + NestJS
 
-## Run tests
+Prisma ORM
 
-```bash
-# unit tests
-$ pnpm run test
+SQLite (banco local)
 
-# e2e tests
-$ pnpm run test:e2e
+Insomnia/Postman para testes
 
-# test coverage
-$ pnpm run test:cov
-```
+TypeScript
 
-## Deployment
+:floppy_disk: Instalação
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+pnpm install
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+npx prisma migrate dev --name init
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+pnpm run start:dev
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Banco será criado automaticamente em prisma/dev.db
 
-## Resources
+:open_file_folder: **Endpoints**
 
-Check out a few resources that may come in handy when working with NestJS:
+Usuários
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Criar usuário
 
-## Support
+POST /users
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**Body:**
 
-## Stay in touch
+{
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+  "email": "teste@exemplo.com",
+  
+  "name": "Gabriel",
+  
+  "password": "123456"
+  
+}
 
-## License
+**Produtos**
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Criar produto
+
+POST /products
+
+Body:
+
+
+{
+
+  "name": "Celular",
+  
+  "description": "Um bom celular",
+  
+  "price": 1200.00,
+  
+  "stock": 10,
+  
+  "category": "eletronicos"
+  
+}
+
+
+**Buscar por nome**
+
+GET /products/search/name/:name
+
+
+**Buscar por categoria**
+
+
+GET /products/search/category/:category
+
+
+**Carrinho**
+
+Criar carrinho para um usuário
+
+POST /cart/user/:userId
+
+**Adicionar vários produtos ao carrinho de um usuário**
+
+POST /cart/user/:userId/products
+
+**Body:**
+
+{
+
+  "products": [
+    { "productId": 1, "quantity": 2 },
+    { "productId": 3, "quantity": 1 }
+  ]
+}
+
+**Buscar carrinho**
+
+
+GET /cart/:carrinhoId
+
+**Remover item do carrinho**
+
+
+DELETE /cart/:carrinhoId/product/:productId
+
+
+**Finalizar compra**
+
+
+PATCH /cart/:carrinhoId/finalizar
+
+
+**Body:**
+
+{
+  "pagamento": "pix"
+}
+
+
+:receipt: **Histórico de Pedidos**
+
+Após a finalização de compra, um historicoPedido é criado contendo:
+
+userId
+
+total
+
+pagamento
+
+status
+
+produtos com quantidade e preço unitário
+
+:white_check_mark: Testes sugeridos (Insomnia/Postman)
+
+Criar um usuário
+
+Criar 2 ou 3 produtos
+
+Adicionar produtos ao carrinho do usuário
+
+Buscar o carrinho
+
+Finalizar o carrinho
+
+Validar se pedido foi criado e carrinho apagado
+
+:warning: Observações
+
+Ao finalizar a compra, o carrinho é excluído e os produtos são registrados em um pedido
+
+A API é 100% stateless (sem login/jwt por enquanto)
+
+:busts_in_silhouette: Autor
+
+Gabriel (Rocket Lab NestJS Challenge)
+
+
